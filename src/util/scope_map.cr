@@ -29,11 +29,11 @@ class Crinja::Util::ScopeMap(K, V)
   end
 
   def [](key : K)
-    if scope.has_key?(key)
-      return scope[key]
+    if (value = scope.fetch(key) { nil }).nil?
+      parent.try(&.[key]) || undefined
+    else
+      value
     end
-
-    parent.try(&.[key]) || undefined
   end
 
   def undefined
