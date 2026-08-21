@@ -228,6 +228,11 @@ struct Crinja::Value
   # Returns an iterator for the underlying value if it is an `Iterable`, `String` or `Undefined`
   # which iterates through the items as `Value`.
   def each
+    if (array = @raw).is_a?(Array(Value))
+      # Fast path: elements are already `Value`, avoid unwrap/rewrap.
+      return Iterator.new(ArrayValueIterator.new(array.each))
+    end
+
     Iterator.new(raw_each)
   end
 
@@ -254,8 +259,28 @@ struct Crinja::Value
   # Assumes the underlying value is an `Iterable` and yields each
   # of the elements or key/values, always as `Value`.
   def each(&)
+    if (array = @raw).is_a?(Array(Value))
+      # Fast path: elements are already `Value`, avoid unwrap/rewrap.
+      array.each do |item|
+        yield item
+      end
+      return
+    end
+
     raw_each do |raw|
       yield Value.new raw
+    end
+  end
+
+  # :nodoc:
+  class ArrayValueIterator
+    include ::Iterator(Value)
+
+    def initialize(@iterator : ::Iterator(Value))
+    end
+
+    def next : Value | Iterator::Stop
+      @iterator.next
     end
   end
 
