@@ -29,7 +29,7 @@ module Crinja::AST
   end
 
   # Helper macro to describe ASTNodes in a nice and clean way
-  macro template_node(name, *properties)
+  macro template_node(name, *properties, &body)
     class {{name.id}} < TemplateNode
       {% for property in properties %}
         property {{property.var}} : {{property.type}}
@@ -41,6 +41,8 @@ module Crinja::AST
                        end.splat
                      }})
       end
+
+      {{ body.body if body }}
     end
   end
 
@@ -173,5 +175,25 @@ module Crinja::AST
     trim_left : Bool,
     left_is_block : Bool,
     trim_right : Bool,
-    right_is_block : Bool
+    right_is_block : Bool do
+    # The trimming applied by `Crinja::Renderer.trim_text` is deterministic
+    # for a given configuration, so the result is memoized per node.
+    def trimmed(trim_blocks : Bool, lstrip_blocks : Bool) : String
+      if @trimmed_cache.nil? || @trimmed_cache_key != {trim_blocks, lstrip_blocks}
+        @trimmed_cache = Crinja::Util::StringTrimmer.trim(
+          string,
+          trim_left || (trim_blocks && left_is_block),
+          trim_right || (lstrip_blocks && right_is_block),
+          left_is_block,
+          right_is_block && lstrip_blocks
+        )
+        @trimmed_cache_key = {trim_blocks, lstrip_blocks}
+      end
+
+      @trimmed_cache.as(String)
+    end
+
+    @trimmed_cache : String?
+    @trimmed_cache_key : {Bool, Bool}?
+  end
 end

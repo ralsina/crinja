@@ -73,13 +73,7 @@ class Crinja::Renderer
   end
 
   def self.trim_text(node, trim_blocks = false, lstrip_blocks = false)
-    Crinja::Util::StringTrimmer.trim(
-      node.string,
-      node.trim_left || (trim_blocks && node.left_is_block),
-      node.trim_right || (lstrip_blocks && node.right_is_block),
-      node.left_is_block,
-      node.right_is_block && lstrip_blocks
-    )
+    node.trimmed(trim_blocks, lstrip_blocks)
   end
 
   visit FixedString do
