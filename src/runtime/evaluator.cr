@@ -100,13 +100,21 @@ class Crinja::Evaluator
 
     argumentlist = evaluate(expression.argumentlist).as(Array(Value))
 
-    keyword_arguments = Variables.new.tap do |args|
-      expression.keyword_arguments.each do |(keyword, value_expression)|
+    keyword_arguments = build_keyword_arguments(expression.keyword_arguments)
+
+    @env.execute_call(callable, argumentlist, keyword_arguments)
+  end
+
+  private def build_keyword_arguments(keyword_arguments) : Variables
+    if keyword_arguments.empty?
+      return Crinja::EMPTY_VARIABLES
+    end
+
+    Variables.new.tap do |args|
+      keyword_arguments.each do |(keyword, value_expression)|
         args[keyword.name] = value value_expression
       end
     end
-
-    @env.execute_call(callable, argumentlist, keyword_arguments)
   end
 
   private def call_on_member(expression : AST::MemberExpression)
@@ -141,11 +149,7 @@ class Crinja::Evaluator
   private def evaluate_filter(callable, expression)
     argumentlist = evaluate(expression.argumentlist)
 
-    keyword_arguments = Variables.new.tap do |args|
-      expression.keyword_arguments.each do |(keyword, value_expression)|
-        args[keyword.name] = value value_expression
-      end
-    end
+    keyword_arguments = build_keyword_arguments(expression.keyword_arguments)
 
     target = value expression.target
     @env.execute_call callable, argumentlist, keyword_arguments, target: target

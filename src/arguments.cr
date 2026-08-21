@@ -1,6 +1,13 @@
 require "./crinja"
 require "./error"
 
+# :nodoc:
+class Crinja
+  # Shared empty hash instances to avoid per-call allocations.
+  # These must never be mutated.
+  EMPTY_VARIABLES = Variables.new
+end
+
 # This holds arguments and environment information for function, filter, test and macro calls.
 struct Crinja::Arguments
   # Returns the variable arguments of the call.
@@ -21,7 +28,7 @@ struct Crinja::Arguments
   # Returns the crinja environment.
   getter env : Crinja
 
-  def initialize(@env, @varargs = [] of Value, @kwargs = Hash(String, Value).new, @defaults = Variables.new, @target = nil)
+  def initialize(@env, @varargs = [] of Value, @kwargs = EMPTY_VARIABLES, @defaults = EMPTY_VARIABLES, @target = nil)
   end
 
   def [](name : String) : Value
