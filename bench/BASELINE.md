@@ -1,14 +1,12 @@
 == Render (pre-parsed templates) ==
-Warning: benchmarking without the `--release` flag won't yield useful results
-     render simple  61.75k ( 16.19µs) (± 5.78%)  7.71kB/op        fastest
-      render loops 860.85  (  1.16ms) (± 2.79%)   500kB/op  71.73× slower
-render expressions  29.91k ( 33.44µs) (± 1.89%)  11.4kB/op   2.06× slower
-     render macros  14.73k ( 67.89µs) (± 2.36%)  27.3kB/op   4.19× slower
+     render simple 269.34k (  3.71µs) (± 4.31%)  7.71kB/op        fastest
+      render loops   3.45k (290.02µs) (± 4.21%)   500kB/op  78.11× slower
+render expressions 134.71k (  7.42µs) (± 8.43%)  11.4kB/op   2.00× slower
+     render macros  55.46k ( 18.03µs) (±12.25%)  27.3kB/op   4.86× slower
 
 == Parse + compile ==
-Warning: benchmarking without the `--release` flag won't yield useful results
-parse simple  48.65k ( 20.56µs) (± 2.18%)  9.71kB/op        fastest
- parse loops  14.63k ( 68.33µs) (± 2.20%)  31.7kB/op   3.32× slower
+parse simple 169.63k (  5.90µs) (± 4.65%)  9.71kB/op        fastest
+ parse loops  53.88k ( 18.56µs) (± 4.27%)  31.7kB/op   3.15× slower
 
 # Baseline benchmark
 
