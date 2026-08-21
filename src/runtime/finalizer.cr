@@ -5,6 +5,11 @@ require "html"
 # but with a few adjustments compared to Crystal standard `to_s` methods.
 struct Crinja::Finalizer
   def self.stringify(raw, escape = false, in_struct = false)
+    # Fast path: an unescaped string can be returned as-is.
+    if raw.is_a?(String) && !escape
+      return raw
+    end
+
     String.build do |io|
       stringify(io, raw, escape, in_struct)
     end
