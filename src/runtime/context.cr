@@ -19,15 +19,36 @@ class Crinja::Context < Crinja::Util::ScopeMap(String, Crinja::Value)
     new(nil, bindings)
   end
 
+  # The call stacks and macro registry are rarely used and thus allocated
+  # lazily to keep context creation (which happens for every scope) cheap.
+  @extend_path_stack : CallStack?
+  @import_path_stack : CallStack?
+  @include_path_stack : CallStack?
+  @macro_stack : CallStack?
+  @macros : Hash(String, Crinja::Tag::Macro::MacroFunction)?
+
   def initialize(parent : Context? = nil, bindings : Variables? = nil)
     super(parent, bindings)
+  end
 
-    @macros = Hash(String, Crinja::Tag::Macro::MacroFunction).new
+  def extend_path_stack
+    @extend_path_stack ||= CallStack.new(:extend, parent.try(&.extend_path_stack))
+  end
 
-    @extend_path_stack = CallStack.new(:extend, parent.try(&.extend_path_stack))
-    @import_path_stack = CallStack.new(:import, parent.try(&.import_path_stack))
-    @include_path_stack = CallStack.new(:include, parent.try(&.include_path_stack))
-    @macro_stack = CallStack.new(:macro, parent.try(&.macro_stack))
+  def import_path_stack
+    @import_path_stack ||= CallStack.new(:import, parent.try(&.import_path_stack))
+  end
+
+  def include_path_stack
+    @include_path_stack ||= CallStack.new(:include, parent.try(&.include_path_stack))
+  end
+
+  def macro_stack
+    @macro_stack ||= CallStack.new(:macro, parent.try(&.macro_stack))
+  end
+
+  def macros
+    @macros ||= Hash(String, Crinja::Tag::Macro::MacroFunction).new
   end
 
   # Returns the parent context. It must not be altered.
@@ -58,15 +79,15 @@ class Crinja::Context < Crinja::Util::ScopeMap(String, Crinja::Value)
   end
 
   def has_macro?(name)
-    @macros.has_key?(name) || parent.try(&.has_macro?(name))
+    macros.has_key?(name) || parent.try(&.has_macro?(name))
   end
 
   def macro(name) : Callable
-    @macros[name]? || parent.try(&.macro(name)) || raise "Macro #{name} is not registered"
+    macros[name]? || parent.try(&.macro(name)) || raise "Macro #{name} is not registered"
   end
 
   def register_macro(makro)
-    @macros[makro.name] = makro
+    macros[makro.name] = makro
   end
 
   def merge!(context : Crinja::Context)
