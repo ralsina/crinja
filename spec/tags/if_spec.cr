@@ -33,4 +33,20 @@ describe Crinja::Tag::If do
       render(%({% if 'Templates' ends with 's' %}"Templates" ends with "s"{% endif %}))
     end
   end
+
+  it "re-evaluates cached conditions on every render" do
+    template = Crinja.new.from_string(%({% if a %}A{% elif b %}B{% else %}C{% endif %}))
+    template.render({"a" => true, "b" => false}).should eq "A"
+    template.render({"a" => false, "b" => true}).should eq "B"
+    template.render({"a" => false, "b" => false}).should eq "C"
+  end
+
+  it "renders nested ifs inside loops" do
+    render(%({% for i in [1, 2, 3] %}{% if i > 1 %}{% if i == 3 %}three{% else %}<{{ i }}>{% endif %}{% endif %}{% endfor %})).should eq "<2>three"
+  end
+
+  it "prints strings unchanged with and without autoescape" do
+    render(%({% if true %}{{ s }}{% endif %}), {"s" => "<b>&</b>"}).should eq "<b>&</b>"
+    render(%({% if true %}{{ s }}{% endif %}), {"s" => "<b>&</b>"}, autoescape: true).should eq "&lt;b&gt;&amp;&lt;/b&gt;"
+  end
 end

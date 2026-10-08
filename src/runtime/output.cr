@@ -1,6 +1,7 @@
 class Crinja::Renderer
   abstract class Output
     abstract def value : String
+    abstract def value(io : IO)
   end
 
   class RenderedOutput < Output
@@ -57,9 +58,11 @@ class Crinja::Renderer
       end
     end
 
+    # Nested lists write straight into *io*: going through their
+    # String value copied every level's output once more
     def value(io : IO)
       nodes.each do |node|
-        io << node.value
+        node.value(io)
       end
     end
 

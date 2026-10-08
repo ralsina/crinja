@@ -16,8 +16,12 @@
 class Crinja::Tag::If < Crinja::Tag
   name "if", "endif"
 
-  private def interpret(io : IO, renderer : Crinja::Renderer, tag_node : TagNode)
+  # The taken branch's outputs as a list, which the enclosing list
+  # writes out once, instead of a String built here and copied again
+  # by every enclosing tag
+  def interpret_output(renderer : Renderer, tag_node : TagNode)
     env = renderer.env
+    output = Renderer::OutputList.new
     current_branch_active = evaluate_node(tag_node, env)
 
     tag_node.block.children.each do |node|
@@ -26,9 +30,14 @@ class Crinja::Tag::If < Crinja::Tag
 
         current_branch_active = evaluate_node(tnode, env)
       else
-        renderer.render(node).value(io) if current_branch_active
+        output << renderer.render(node) if current_branch_active
       end
     end
+    output
+  end
+
+  private def interpret(io : IO, renderer : Crinja::Renderer, tag_node : TagNode)
+    interpret_output(renderer, tag_node).value(io)
   end
 
   def evaluate_node(tag_node, env : Crinja)
@@ -36,14 +45,18 @@ class Crinja::Tag::If < Crinja::Tag
       return true
     end
 
-    arguments = ArgumentsParser.new(tag_node.arguments, env.config)
-    expression = arguments.parse_expression
+    # The condition is the same on every render: parse it once
+    expression = tag_node.parsed_condition ||= begin
+      arguments = ArgumentsParser.new(tag_node.arguments, env.config)
+      parsed = arguments.parse_expression
 
-    if expression.is_a?(AST::Empty)
-      raise TemplateSyntaxError.new(tag_node, "#{tag_node.name} tag missing condition")
+      if parsed.is_a?(AST::Empty)
+        raise TemplateSyntaxError.new(tag_node, "#{tag_node.name} tag missing condition")
+      end
+
+      arguments.close
+      parsed
     end
-
-    arguments.close
 
     value = env.evaluator.value(expression)
     value.truthy?

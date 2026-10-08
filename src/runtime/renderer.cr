@@ -108,7 +108,14 @@ class Crinja::Renderer
 
     result = env.evaluate(expr)
 
-    RenderedOutput.new env.stringify(result)
+    # A plain string printed without autoescape is its own output:
+    # stringify would only copy it
+    raw = result.raw
+    if raw.is_a?(String) && !env.context.autoescape?
+      RenderedOutput.new raw
+    else
+      RenderedOutput.new env.stringify(result)
+    end
   end
 
   # global function `super` needs access to this renderer and thus needs to be implemented

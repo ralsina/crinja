@@ -161,6 +161,14 @@ module Crinja::AST
     block : NodeList,
     end_tag : EndTagNode?
 
+  class TagNode
+    # Arguments parsed on first render and reused on every later one,
+    # for tags whose arguments are pure syntax: the condition of an
+    # if/elif and the header of a for
+    property parsed_condition : ExpressionNode? = nil
+    property parsed_for : {Array(String), ExpressionNode, ExpressionNode?, Bool}? = nil
+  end
+
   template_node EndTagNode,
     name : String,
     arguments : Array(Parser::Token)

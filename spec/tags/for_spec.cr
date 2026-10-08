@@ -208,4 +208,11 @@ describe Crinja::Tag::For do
     template = env.from_string(%({% for entry in seq %}{{ foo() }}{% endfor %}))
     template.render({"seq" => ["a", "b"]}).should eq "calledcalled"
   end
+
+  it "re-evaluates a cached loop header on every render" do
+    template = Crinja.new.from_string(%({% for x in items if x != skip %}{{ x }}{% else %}-{% endfor %}))
+    template.render({"items" => [1, 2, 3], "skip" => 2}).should eq "13"
+    template.render({"items" => [4, 5], "skip" => 4}).should eq "5"
+    template.render({"items" => [] of Int32, "skip" => 0}).should eq "-"
+  end
 end
